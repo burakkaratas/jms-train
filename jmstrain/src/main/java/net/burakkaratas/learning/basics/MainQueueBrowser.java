@@ -1,46 +1,54 @@
 package net.burakkaratas.learning.basics;
 
+import java.util.Enumeration;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
+import javax.jms.Queue;
+import javax.jms.QueueBrowser;
 import javax.jms.Session;
 import javax.jms.TextMessage;
-import javax.jms.Topic;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
-public class MainTopic {
+public class MainQueueBrowser {
 
   public static void main(String[] args) {
 
     InitialContext initialContext = null;
     Connection connection = null;
-
     try {
       initialContext = new InitialContext();
-      Topic topic = (Topic) initialContext.lookup("topic/appTopic");
 
       ConnectionFactory connectionFactory = (ConnectionFactory) initialContext
           .lookup("ConnectionFactory");
+      Queue queue = (Queue) initialContext.lookup("queue/appQueue");
+
       connection = connectionFactory.createConnection();
-
       Session session = connection.createSession();
-      MessageProducer producer = session.createProducer(topic);
 
-      MessageConsumer consumer1 = session.createConsumer(topic);
-      MessageConsumer consumer2 = session.createConsumer(topic);
+      MessageProducer producer = session.createProducer(queue);
+      TextMessage textMessage1 = session.createTextMessage("Selam");
+      TextMessage textMessage2 = session.createTextMessage("Tuts");
 
-      TextMessage tuts = session.createTextMessage("Tuts");
-      producer.send(tuts);
+      producer.send(textMessage1);
+      producer.send(textMessage2);
+
+      QueueBrowser browser = session.createBrowser(queue);
+      Enumeration messagesEnumeration = browser.getEnumeration();
+      while (messagesEnumeration.hasMoreElements()){
+        TextMessage textMessage = (TextMessage) messagesEnumeration.nextElement();
+        System.out.println(textMessage.getText());
+      }
+
+      MessageConsumer consumer = session.createConsumer(queue);
       connection.start();
-
-      TextMessage receive1 = (TextMessage) consumer1.receive();
-      TextMessage receive2 = (TextMessage) consumer2.receive();
-
-      System.out.println("consumer1 :: " + receive1.getText());
-      System.out.println("consumer2 :: " + receive2.getText());
+      TextMessage receive = (TextMessage) consumer.receive();
+      System.out.println(receive.getText());
+      receive = (TextMessage) consumer.receive();
+      System.out.println(receive.getText());
 
     } catch (NamingException e) {
       e.printStackTrace();
@@ -55,7 +63,7 @@ public class MainTopic {
         }
       }
 
-      if (null != connection) {
+      if (null != connection){
         try {
           connection.close();
         } catch (JMSException e) {
@@ -63,7 +71,6 @@ public class MainTopic {
         }
       }
     }
-
   }
 
 }
