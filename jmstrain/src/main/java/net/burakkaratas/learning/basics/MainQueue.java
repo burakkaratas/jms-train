@@ -3,7 +3,6 @@ package net.burakkaratas.learning.basics;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
-import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
 import javax.jms.Queue;
@@ -17,7 +16,7 @@ public class MainQueue {
   public static void main(String[] args) {
 
     InitialContext initialContext = null;
-
+    Connection connection = null;
     try {
       initialContext = new InitialContext();
 
@@ -25,7 +24,7 @@ public class MainQueue {
           .lookup("ConnectionFactory");
       Queue queue = (Queue) initialContext.lookup("queue/appQueue");
 
-      Connection connection = connectionFactory.createConnection();
+      connection = connectionFactory.createConnection();
       Session session = connection.createSession();
 
       MessageProducer producer = session.createProducer(queue);
@@ -41,6 +40,22 @@ public class MainQueue {
       e.printStackTrace();
     } catch (JMSException e) {
       e.printStackTrace();
+    } finally {
+      if (null != initialContext) {
+        try {
+          initialContext.close();
+        } catch (NamingException e) {
+          e.printStackTrace();
+        }
+      }
+
+      if (null != connection){
+        try {
+          connection.close();
+        } catch (JMSException e) {
+          e.printStackTrace();
+        }
+      }
     }
   }
 
